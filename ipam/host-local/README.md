@@ -1,10 +1,10 @@
-### host-local
+## host-local
 代码架构与cni plugin 架构类似，也是使用 command 形式， 主要包括 cmdAdd 与 cmdDel.
 github 地址：https://github.com/containernetworking/plugins
 
-#### 代码流程
+### 代码流程
     
-##### 注册环节
+#### 注册环节
    在main.go里， 将相应的的操作func注册
    
 ```
@@ -14,8 +14,8 @@ func main() {
 }
 ```
 
-##### cmdAdd
-###### 配置初始化（LoadIPAMConfig） 
+#### cmdAdd
+##### 配置初始化（LoadIPAMConfig） 
 
 * 首先将ipam config 文件内容转换成 Net struct 
 * 根据Net struct 将对应ip range 加入 ranges
@@ -47,7 +47,7 @@ type Range struct {
 根据结构体可以分析出IPAMConfig.Range 与 IPAMConfig.Ranges对应的数组单元是一致的， 在loadIPAMConfig func 中会将IPAMConfig.Range append到IPAMConfig.Ranges[]中；
 故通常我们看配置文件，通常是没有ranges参数的，怀疑是给特别的cni插件使用，配置多ip
 
-###### 配置存储ip地址信息的宿主机目录地址（disk.New）
+##### 配置存储ip地址信息的宿主机目录地址（disk.New）
 从中就说明一个问题， host-local不会根据当前宿主机的容器ip 自动筛选， 当删除容器异常或者docker异常事故， 功能导致存储在该目录下文件没有删除，从而导致ip耗尽
 ```
 const lastIPFilePrefix = "last_reserved_ip."
@@ -76,7 +76,7 @@ func New(network, dataDir string) (*Store, error) {
 ```
 查看代码发现，其存储ip信息的具体目录为/var/lib/cni/networks，若ipam无name，则该目录为根目录，若ipam有name ，则目录层级为/var/lib/cni/network/{ipam.name}
 
-###### 根据Ranges的配置来获取对应ip
+##### 根据Ranges的配置来获取对应ip
 以ranges slice 为循环操作， 发挥ips
 
 * 获取index ， value(ranges[index])
@@ -134,8 +134,8 @@ if i.startIP == nil {
 ```
 rangeIdx 是在多个range 场景，也就是多个ip域，当在其中一个ip域，选择到最后一个rangeEnd ip ，则进入下一个ip域，直到回到最初last_reserved_ip，则代表ip资源耗尽
 
-##### cmdDel
-###### 配置初始化（LoadIPAMConfig） 
+#### cmdDel
+##### 配置初始化（LoadIPAMConfig） 
 ##### 找寻IP文件，删除它
 ```
 // N.B. This function eats errors to be tolerant and
